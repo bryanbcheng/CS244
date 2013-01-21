@@ -22,6 +22,22 @@ import sys
 import os
 import math
 
+# Calculate mean of the values  
+def mean(values):  
+    size = len(values)  
+    sum = 0.0  
+    for n in range(0, size):  
+        sum += values[n]  
+    return sum / size
+  
+# Calculate standard deviation  
+def std_dev(values, mean):  
+    size = len(values)  
+    sum = 0.0  
+    for n in range(0, size):  
+        sum += math.sqrt((values[n] - mean)**2)  
+    return math.sqrt((1.0/(size-1))*(sum/size)) 
+
 # TODO: Don't just read the TODO sections in this code.  Remember that
 # one of the goals of this assignment is for you to learn how to use
 # Mininet. :-)
@@ -111,11 +127,9 @@ def start_iperf(net):
     # that the TCP flow is not receiver window limited.  If it is,
     # there is a chance that the router buffer may not get filled up.
     server = h2.popen("iperf -s -w 16m")
-    # TODO: Start the iperf client on h1.  Ensure that you create a
+    # Start the iperf client on h1.  Ensure that you create a
     # long lived TCP flow.
-    client = h1.popen("iperf -c %s" % h2.IP())
-
-    return (server,client)
+    client = h1.popen("iperf -c %s -t %s" % (h2.IP(), args.time))
 
 def start_webserver(net):
     h1 = net.getNodeByName('h1')
@@ -123,26 +137,26 @@ def start_webserver(net):
     sleep(1)
     return [proc]
 
-# TODO finish this function
-def download_webserver(net):
+# Downloads the webpage from the webserver
+# Returns the download time
+def fetch_webpage(net):
+    h1 = net.getNodeByName('h1')
     h2 = net.getNodeByName('h2')
-    download = h2.popen("curl -o /dev/null -s -w %{time_total} h1")
+    return h2.cmd("curl -o /dev/null -s -w %%{time_total} %s/http/index.html" % (h1.IP()))
 
 def start_ping(net, outfile="ping.txt"):
-    # TODO: Start a ping train from h1 to h2 (or h2 to h1, does it
+    # Start a ping train from h1 to h2 (or h2 to h1, does it
     # matter?)  Measure RTTs every 0.1 second.  Read the ping man page
     # to see how to do this.
     h1 = net.getNodeByName('h1')
     h2 = net.getNodeByName('h2')
 
-    # TODO:
     print "Starting ping train..."
     ping = h1.popen("ping -i 0.1 %s > %s/%s" % (h2.IP(), args.dir, outfile), shell=True)
 
     # Hint: Use host.popen(cmd, shell=True).  If you pass shell=True
     # to popen, you can redirect cmd's output using shell syntax.
     # i.e. ping ... > /path/to/ping.
-    return ping
 
 def bufferbloat():
     if not os.path.exists(args.dir):
@@ -160,7 +174,7 @@ def bufferbloat():
     # Start all the monitoring processes
     start_tcpprobe("cwnd.txt")
 
-    # TODO: Start monitoring the queue sizes.  Since the switch I
+    # Start monitoring the queue sizes.  Since the switch I
     # created is "s0", I monitor one of the interfaces.  Which
     # interface?  The interface numbering starts with 1 and increases.
     # Depending on the order you add links to your network, this
@@ -168,13 +182,12 @@ def bufferbloat():
     qmon = start_qmon(iface='s0-eth2',
                       outfile='%s/q.txt' % (args.dir))
 
-    # TODO: Start iperf, webservers, etc.
-    iperf = start_iperf(net)
-    ping = start_ping(net)
+    # Start iperf, webservers, etc.
+    start_iperf(net)
+    start_ping(net)
+    start_webserver(net)
 
-    # start_webserver
-
-    # TODO: measure the time it takes to complete webpage transfer
+    # Measure the time it takes to complete webpage transfer
     # from h1 to h2 (say) 3 times.  Hint: check what the following
     # command does: curl -o /dev/null -s -w %{time_total} google.com
     # Now use the curl command to fetch webpage from the webserver you
@@ -184,8 +197,10 @@ def bufferbloat():
     # loop below useful.
     
     start_time = time()
+    dl_times = []
     while True:
-        # do the measurement (say) 3 times.
+        # do the measurement
+        dl_times.append(fetch_webpage(net))
         sleep(5)
         now = time()
         delta = now - start_time
@@ -193,9 +208,18 @@ def bufferbloat():
             break
         print "%.1fs left..." % (args.time - delta)
     
-    # TODO: compute average (and standard deviation) of the fetch
+    # Compute average (and standard deviation) of the fetch
     # times.  You don't need to plot them.  Just note it in your
     # README and explain.
+    dl_times = map(float, dl_times)
+
+    print dl_times
+
+    average = mean(dl_times)
+    sd = std_dev(dl_times, average)
+
+    print "average: %s" % (average)
+    print "standard deviation: %s" % (sd)
 
     # Hint: The command below invokes a CLI which you can use to
     # debug.  It allows you to run arbitrary commands inside your
@@ -204,9 +228,6 @@ def bufferbloat():
 
     stop_tcpprobe()
     qmon.terminate()
-    iperf[0].terminate()
-    iperf[1].terminate()
-    ping.terminate()
 
     net.stop()
     # Ensure that all processes you create within Mininet are killed.

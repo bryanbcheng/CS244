@@ -1,0 +1,33 @@
+1) Why do you see a difference in webpage fetch times with short and large router buffers?
+
+We are downloading the webpage from h1 to h2. The packets that enter the queue are webpage's data packets.
+Packets for both router buffers have to wait in the queue until all previous packets in the queue have been sent. Because a shorter router buffer will have a shorter queue and thus less time to wait, the fetch time for the short router buffer will also be less than the fetch time for the larger router buffer. 
+
+These packets in the short router buffer model do not have to wait in the queue as long as packets in the large router buffer model. 
+
+2) Bufferbloat can occur in other places such as your network interface card (NIC).  Check the output of ifconfig eth0 on your EC2 instance.  What is the (maximum) transmit queue length on the network interface?  If you assume the queue drains at 100Mb/s, what is the maximum time a packet might wait in the queue before it leaves the NIC?
+
+txqueuelen:1000 packets, MTU = 1500 bytes
+
+If the queue is completely full, it would take 1000 packets * 1500 bytes/packet * 8 bits/byte * 1/(100 Mb/s) * 1/10^6 Mb/bit = 0.12s.
+
+3) How does the RTT reported by ping vary with the queue size?  Write a symbolic equation to describe the relation between the two (ignore computation overheads in ping that might affect the final result).
+
+RTT = k(~20) * qsize
+
+4) Identify and describe two ways to mitigate the bufferbloat problem.
+
+The easiest way to mitigate the bufferbloat issue is to simply reduce the queue size. As we see in this example, the smaller queue (q=20) has better response time than the larger queue (q=100).
+
+Another solution could be to limit the flow coming into the queue.???
+
+
+qsize = 20
+fetch times: [4.627, 4.375, 2.468, 3.698, 2.985, 3.008, 3.291, 2.972, 3.048, 2.698, 2.768, 2.317, 2.426, 2.451, 2.98, 2.309, 2.613, 2.691, 2.831, 3.481, 2.313, 2.723, 3.421, 2.366, 2.381, 2.61]
+average: 2.91734615385
+standard deviation: 0.133534119036
+
+qsize = 100
+fetch times: [7.067, 7.875, 9.609, 6.838, 6.859, 8.043, 8.772, 6.337, 7.552, 8.718, 7.347, 6.707, 7.935, 9.011, 6.224, 7.447]
+average: 7.6463125
+standard deviation: 0.231639311934
