@@ -1,33 +1,39 @@
 1) Why do you see a difference in webpage fetch times with short and large router buffers?
 
-We are downloading the webpage from h1 to h2. The packets that enter the queue are webpage's data packets.
-Packets for both router buffers have to wait in the queue until all previous packets in the queue have been sent. Because a shorter router buffer will have a shorter queue and thus less time to wait, the fetch time for the short router buffer will also be less than the fetch time for the larger router buffer. 
+We are downloading the webpage from h1's webserver to h2. The packets that are queued are the webpage's data packets.
 
-These packets in the short router buffer model do not have to wait in the queue as long as packets in the large router buffer model. 
+Packets for both router buffers have to wait in the queue until all previous packets in the queue have been sent. Because a shorter router buffer will have a shorter queue and thus less time to wait, the fetch time for the short router buffer will also be less than the fetch time for the larger router buffer.
 
 2) Bufferbloat can occur in other places such as your network interface card (NIC).  Check the output of ifconfig eth0 on your EC2 instance.  What is the (maximum) transmit queue length on the network interface?  If you assume the queue drains at 100Mb/s, what is the maximum time a packet might wait in the queue before it leaves the NIC?
 
 txqueuelen:1000 packets, MTU = 1500 bytes
 
-If the queue is completely full, it would take 1000 packets * 1500 bytes/packet * 8 bits/byte * 1/(100 Mb/s) * 1/10^6 Mb/bit = 0.12s.
+If the queue is completely full, it would hold 1000 1500 byte packets. For maximum wait time, a packet would have to wait for all the packets in a full queue to leave before it can leave the NIC.
+
+1000 packets * 1500 bytes/packet * 8 bits/byte * 1/(100 Mb/s) * 1/10^6 Mb/bit = 0.12s.
 
 3) How does the RTT reported by ping vary with the queue size?  Write a symbolic equation to describe the relation between the two (ignore computation overheads in ping that might affect the final result).
 
-RTT = k(~20) * qsize
+RTT = k(= ~7.5) * qsize
+
+The RTT is directly proportional to the current queue size.
 
 4) Identify and describe two ways to mitigate the bufferbloat problem.
 
-The easiest way to mitigate the bufferbloat issue is to simply reduce the queue size. As we see in this example, the smaller queue (q=20) has better response time than the larger queue (q=100).
+The easiest way to mitigate the bufferbloat issue is to simply reduce the queue size. As we see in this example, the smaller queue (q=20) has better response time than the larger queue (q=100). We can make these adjustments for example in our computers.
 
-Another solution could be to limit the flow coming into the queue.???
+Another mitigation would be using bandwith shaping or traffic shaping. If we limit the rate of our traffic and prevent bottleneck buffers from filling up, we can avoid the bufferbloat problem. However, this does come at a cost of lower bandwith. (http://cacm.acm.org/magazines/2012/1/144810-bufferbloat/fulltext)
 
+Webpage Fetch Data:
 
 qsize = 20
-fetch times: [4.627, 4.375, 2.468, 3.698, 2.985, 3.008, 3.291, 2.972, 3.048, 2.698, 2.768, 2.317, 2.426, 2.451, 2.98, 2.309, 2.613, 2.691, 2.831, 3.481, 2.313, 2.723, 3.421, 2.366, 2.381, 2.61]
-average: 2.91734615385
-standard deviation: 0.133534119036
+fetch times: [5.948, 2.889, 2.663, 3.837, 3.722, 2.697, 3.545, 2.764, 2.718, 3.418, 2.94, 2.676, 2.557, 2.473, 2.626, 2.632, 3.361, 2.87, 4.102, 3.421, 2.789, 2.163, 2.61, 3.099, 2.456]
+average: 3.07904
+standard deviation: 0.753145111117373
 
 qsize = 100
-fetch times: [7.067, 7.875, 9.609, 6.838, 6.859, 8.043, 8.772, 6.337, 7.552, 8.718, 7.347, 6.707, 7.935, 9.011, 6.224, 7.447]
-average: 7.6463125
-standard deviation: 0.231639311934
+fetch times: [7.103, 7.874, 8.944, 6.594, 6.875, 8.079, 10.507, 8.707, 7.185, 8.342, 8.878, 6.395, 7.666, 8.829, 10.89, 3.578]
+average: 7.902875
+standard deviation: 1.666346447883813
+
+As expected, the average fetch time for the smaller queue is less than the average fetch time for the larger queue. The larger queue also has a greater standard deviation because the queue itself has higher variance, ranging from 100 packets in the queue to about 50, causing the delays to vary more as well.

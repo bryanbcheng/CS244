@@ -35,8 +35,8 @@ def std_dev(values, mean):
     size = len(values)  
     sum = 0.0  
     for n in range(0, size):  
-        sum += math.sqrt((values[n] - mean)**2)  
-    return math.sqrt((1.0/(size-1))*(sum/size)) 
+        sum += (values[n] - mean)**2
+    return math.sqrt((1.0/size)*sum) 
 
 # TODO: Don't just read the TODO sections in this code.  Remember that
 # one of the goals of this assignment is for you to learn how to use
