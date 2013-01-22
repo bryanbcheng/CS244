@@ -151,11 +151,20 @@ class StarTopo(Topo):
         self.maxq = maxq
         self.create_topology()
 
-    # TODO: Fill in the following function to Create the experiment
-    # topology Set appropriate values for bandwidth, delay, and queue
-    # size.
+    # Create the experiment topology
+    # Set appropriate values for bandwidth, delay, and queue size.
     def create_topology(self):
-        pass
+        hosts = []
+        for i in range(1,self.n + 1):
+            hosts.append(self.addHost('h%s' % (i)))
+        
+        switch = self.addSwitch('s0')
+
+        # Add bottleneck link
+        self.addLink(hosts[0], switch, bw=self.bw_net, max_queue_size=self.maxq)
+        for i in range(1,self.n):
+            self.addLink(hosts[i], switch, bw=self.bw_host, delay=self.delay)
+            
 
 def start_tcpprobe():
     "Install tcp_probe module and dump to file"

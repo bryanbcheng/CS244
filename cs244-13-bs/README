@@ -3,3 +3,29 @@ Instructions to run the assignment:
 
 Answers to quiz questions:
 
+
+1) Briefly describe two key/qualitative differences between Mininet and the actual hardware setup for the buffer sizing experiment. (Stating obvious ones like “Mininet is software, but hardware is hardware” will not earn you any points!)
+
+
+
+2) In the binary search algorithm, we adjust the buffer size while the flows are running. How long will it take for the TCP flows to adjust their windows when the buffer size is reduced to half its value?
+
+
+
+3) In the experimental setup, we use a modified iperf because it is hard to establish new connections after long lived TCP flows have started. Why is i so?
+
+long lived TCP flows are in the sawtooth shape
+
+new connections will have to start in slow start, but since the network is congested, it will immediately exit slow start and enter the next phase
+
+4) Look at the plot of cwnd and buffer occupancy for N=1 flow. Based on your understanding of TCP and the buffer sizing paper, explain why you need buffering at the bottleneck switch. For N=1 flow, what is the minimum amount of buffering required to keep the bottleneck link 100% utilized? Why?
+
+buffering otherwise it drops a lot of packets
+1.5x? TCP reno will handle sawtooth
+
+5) What happens to cwnd and minimum required buffer size as you increase N? Why?
+
+
+
+6) Describe potential hurdles when using Mininet to reproduce research results. How can this knowledge guide you when choosing a research project for the next programming assignment?
+
