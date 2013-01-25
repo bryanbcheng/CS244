@@ -8,6 +8,7 @@ from mininet.link import TCLink
 from mininet.net import Mininet
 from mininet.log import lg
 from mininet.util import dumpNodeConnections
+from mininet.cli import CLI
 
 import subprocess
 from subprocess import Popen, PIPE
@@ -332,6 +333,17 @@ def do_sweep(iface):
         print "Trying q=%d  [%d,%d] " % (mid, min_q, max_q),
         sys.stdout.flush()
 
+        set_q(iface, mid)
+        rates = get_rates(iface)
+        print "measured rates: %s" % rates
+        rate_avg = avg(rates)
+        rate_median = median(rates)        
+
+        if (ok(rate_median/args.bw_net)):
+            max_q = mid
+        else:
+            min_q = mid
+
         # TODO: Binary search over queue sizes.
         # (1) Check if a queue size of "mid" achieves required utilization
         #     based on the median value of the measured rate samples.
@@ -353,6 +365,7 @@ def do_sweep(iface):
 
 def verify_latency(net):
     "(Incomplete) verify link latency"
+    # using ping
     pass
 
 # TODO: Fill in the following function to verify the bandwidth
@@ -362,7 +375,6 @@ def verify_bandwidth(net):
     "(Incomplete) verify link bandwidth"
     pass
 
-# TODO: Fill in the following function to
 # Start iperf on the receiver node
 # Hint: use getNodeByName to get a handle on the sender node
 # Hint: iperf command to start the receiver:
@@ -372,9 +384,10 @@ def verify_bandwidth(net):
 #       It will be used later in count_connections()
 
 def start_receiver(net):
-    pass
+    h1 = net.getNodeByName('h1')
+    h1.popen("%s -s -p %s > %s/iperf_server.txt" %
+             (CUSTOM_IPERF_PATH, 5001, args.dir), shell=True)
 
-# TODO: Fill in the following function to
 # Start args.nflows flows across the senders in a round-robin fashion
 # Hint: use getNodeByName to get a handle on the sender (A or B in the
 # figure) and receiver node (C in the figure).
@@ -389,7 +402,17 @@ def start_receiver(net):
 def start_senders(net):
     # Seconds to run iperf; keep this very high
     seconds = 3600
-    pass
+
+    server = net.getNodeByName('h1')
+
+    hosts = []
+    for i in range(2,args.n + 1):
+        hosts.append(net.getNodeByName('h%s' % i))
+
+    for i in range(0,args.nflows):
+        for j in range(0,len(hosts)):
+            hosts[j].popen("%s -c %s -p %s -t %d -i 1 -yc -Z %s > %s/iperf_client%d-%d.txt" % (CUSTOM_IPERF_PATH, server.IP(), 5001, seconds, args.cong, args.dir, i, j), shell=True)
+
 
 def main():
     "Create network and run Buffer Sizing experiment"
@@ -417,7 +440,6 @@ def main():
 
     start_senders(net)
 
-    # TODO: change the interface for which queue size is adjusted
     ret = do_sweep(iface='s0-eth1')
     total_flows = (args.n - 1) * args.nflows
 

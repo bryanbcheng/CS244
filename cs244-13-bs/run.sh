@@ -37,8 +37,8 @@ for flows_per_host in 1 2 5 10 50 100 200 300 400; do
 		-n 3 \
 		--iperf $iperf
 
-	#python $plotpath/plot_queue.py -f $dir/qlen_$iface.txt -o $dir/q.png
-	#python $plotpath/plot_tcpprobe.py -f $dir/tcp_probe.txt -o $dir/cwnd.png --histogram
+	python $plotpath/plot_queue.py -f $dir/qlen_$iface.txt -o $dir/q.png
+	python $plotpath/plot_tcpprobe.py -f $dir/tcp_probe.txt -o $dir/cwnd.png --histogram
 done
 done
 
