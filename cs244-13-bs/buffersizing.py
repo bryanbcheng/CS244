@@ -22,6 +22,7 @@ import os
 from util.monitor import monitor_qlen
 from util.helper import stdev
 
+import math
 
 # Number of samples to skip for reference util calibration.
 CALIBRATION_SKIP = 10
@@ -308,7 +309,7 @@ def do_sweep(iface):
         print 'Giving up'
         return -1
 
-    # TODO: Set the speed back to the bottleneck link speed.
+    # Set the speed back to the bottleneck link speed.
     set_speed(iface, "%.2fMbit" % args.bw_net)
     print "\nSetting q=%d " % max_q,
     sys.stdout.flush()
@@ -344,36 +345,63 @@ def do_sweep(iface):
         else:
             min_q = mid
 
-        # TODO: Binary search over queue sizes.
-        # (1) Check if a queue size of "mid" achieves required utilization
-        #     based on the median value of the measured rate samples.
-        # (2) Change values of max_q and min_q accordingly
-        #     to continue with the binary search
-
-        # You may use the helper functions set_q(),
-        # get_rates(), avg(), median() and ok()
-
-        # Note: this do_sweep function does a bunch of setup, so do
-        # not recursively call do_sweep to do binary search.
-
     monitor.terminate()
     print "*** Minq for target: %d" % max_q
     return max_q
 
-# TODO: Fill in the following function to verify the latency
-# settings of your topology
-
+# Verify the latency settings of your topology using ping
 def verify_latency(net):
-    "(Incomplete) verify link latency"
-    # using ping
-    pass
+    "Verify link latency"
+    h1 = net.getNodeByName('h1')
 
-# TODO: Fill in the following function to verify the bandwidth
-# settings of your topology
+    hosts = []
+    for i in range(2,args.n + 1):
+        hosts.append(net.getNodeByName('h%s' % i))
 
+    for i in range(0, len(hosts)):
+        print "Verifying link latency from %s... " % hosts[i],
+        sys.stdout.flush()
+        result = hosts[i].cmd("ping -c 5 %s" % h1.IP())
+
+        # Parse avg rtt and compare
+        summary = result.split('\n')[-2]
+        avg_rtt = float(summary.split('/')[-3])
+        exp_rtt = 2 * args.delay # expected rtt
+        
+        if math.fabs(avg_rtt - exp_rtt) / (exp_rtt) > 0.01:
+            print "FAILURE"
+            return False
+        
+        print "SUCCESS"
+    
+    return True
+
+# Verify the bandwidth settings of your topology
 def verify_bandwidth(net):
-    "(Incomplete) verify link bandwidth"
-    pass
+    "Verify link bandwidth"
+    print "Verifying bandwith... ",
+    sys.stdout.flush()
+
+    h1 = net.getNodeByName('h1')
+    h2 = net.getNodeByName('h2')
+    
+    # launch basic iperf to measure at bottleneck
+    h1.popen("iperf -s")
+    h2.popen("iperf -c %s" % h1.IP())
+
+    # get rates and verify
+    rates = get_rates(iface='s0-eth1')
+
+    # kill the 2 iperf processes
+    os.system('killall -9 iperf')
+
+    if not ok(avg(rates)/args.bw_net):
+        print "FAILURE"
+
+        return False
+
+    print "SUCCESS"
+    return True
 
 # Start iperf on the receiver node
 # Hint: use getNodeByName to get a handle on the sender node
@@ -427,10 +455,10 @@ def main():
     dumpNodeConnections(net.hosts)
     net.pingAll()
 
-    # TODO: verify latency and bandwidth of links in the topology you
+    # Verify latency and bandwidth of links in the topology you
     # just created.
-    verify_latency(net)
-    verify_bandwidth(net)
+    if not verify_latency(net) or not verify_bandwidth(net):
+        return # TODO: throw exception??
 
     start_receiver(net)
 

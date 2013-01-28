@@ -26,7 +26,8 @@ iperf=~/iperf-patched/src/iperf
 iface=s0-eth1
 
 for run in 1; do
-for flows_per_host in 1 2 5 10 50 100 200 300 400; do
+#for flows_per_host in 1 2 5 10 50 100 200 300 400; do
+for flows_per_host in 1; do
 	dir=$rootdir/nf$flows_per_host-r$run
 
 	python buffersizing.py --bw-host 1000 \
