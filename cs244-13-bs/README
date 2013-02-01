@@ -6,11 +6,13 @@ Answers to quiz questions:
 
 1) Briefly describe two key/qualitative differences between Mininet and the actual hardware setup for the buffer sizing experiment. (Stating obvious ones like “Mininet is software, but hardware is hardware” will not earn you any points!)
 
+For Mininet, we put the delay on the host links and did not put any delay on the bottleneck links. This is manageable for the simulation since the RTT will take the same amount of time. However, in the actual hardware setup, the propagation delay will be spread out evenly among the host links and network link depending on the length of each link.
+
 
 
 2) In the binary search algorithm, we adjust the buffer size while the flows are running. How long will it take for the TCP flows to adjust their windows when the buffer size is reduced to half its value?
 
-
+RTT ratio??
 
 3) In the experimental setup, we use a modified iperf because it is hard to establish new connections after long lived TCP flows have started. Why is i so?
 
@@ -25,7 +27,8 @@ buffering otherwise it drops a lot of packets
 
 5) What happens to cwnd and minimum required buffer size as you increase N? Why?
 
-
+cwnd and the minimum required buffer size decreases??
 
 6) Describe potential hurdles when using Mininet to reproduce research results. How can this knowledge guide you when choosing a research project for the next programming assignment?
 
+Mininet is a simulation using the system's resources. Mininet can only do as much as the underlying system can as well. For example, using the c1.medium instance was not sufficient for running these simulations and we needed to use the c1.xlarge instance to have sufficient processing power. We have to be sure that if we are doing stress tests for our research project our instance can handle the workload, so our results are as accurate as possible.

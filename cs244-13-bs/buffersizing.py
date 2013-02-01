@@ -28,7 +28,8 @@ import math
 CALIBRATION_SKIP = 10
 
 # Number of samples to grab for reference util calibration.
-CALIBRATION_SAMPLES = 30
+#CALIBRATION_SAMPLES = 30
+CALIBRATION_SAMPLES = 10
 
 # Set the fraction of the link utilization that the measurement must exceed
 # to be considered as having enough buffering.
@@ -44,7 +45,8 @@ START_BW_FRACTION = 0.9
 NSAMPLES = 3
 
 # Time to wait between samples, in seconds, as a float.
-SAMPLE_PERIOD_SEC = 1.0
+#SAMPLE_PERIOD_SEC = 1.0
+SAMPLE_PERIOD_SEC = 0.3
 
 # Time to wait for first sample, in seconds, as a float.
 SAMPLE_WAIT_SEC = 3.0
@@ -340,7 +342,7 @@ def do_sweep(iface):
         rate_avg = avg(rates)
         rate_median = median(rates)        
 
-        if (ok(rate_median/args.bw_net)):
+        if (ok(rate_avg/args.bw_net)):
             max_q = mid
         else:
             min_q = mid
@@ -370,11 +372,9 @@ def verify_latency(net):
         
         if math.fabs(avg_rtt - exp_rtt) / (exp_rtt) > 0.01:
             print "FAILURE"
-            return False
+            raise Exception("Verify link latency failed")
         
         print "SUCCESS"
-    
-    return True
 
 # Verify the bandwidth settings of your topology
 def verify_bandwidth(net):
@@ -390,18 +390,21 @@ def verify_bandwidth(net):
     h2.popen("iperf -c %s" % h1.IP())
 
     # get rates and verify
-    rates = get_rates(iface='s0-eth1')
+    rates = get_rates(iface='s0-eth1', nsamples=CALIBRATION_SKIP+NSAMPLES)
+    rates = rates[CALIBRATION_SKIP:]
 
     # kill the 2 iperf processes
     os.system('killall -9 iperf')
 
+    print rates
+    print avg(rates)
+    print avg(rates) / args.bw_net
+
     if not ok(avg(rates)/args.bw_net):
         print "FAILURE"
-
-        return False
+        raise Exception("Verify link bandwith failed")
 
     print "SUCCESS"
-    return True
 
 # Start iperf on the receiver node
 # Hint: use getNodeByName to get a handle on the sender node
@@ -457,8 +460,8 @@ def main():
 
     # Verify latency and bandwidth of links in the topology you
     # just created.
-    if not verify_latency(net) or not verify_bandwidth(net):
-        return # TODO: throw exception??
+    verify_latency(net)
+    verify_bandwidth(net)
 
     start_receiver(net)
 
