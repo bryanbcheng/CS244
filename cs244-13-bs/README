@@ -1,5 +1,6 @@
 Instructions to run the assignment:
 
+sudo ./run.sh (Does the test at .97 threshold and for 5 iterations)
 
 Answers to quiz questions:
 

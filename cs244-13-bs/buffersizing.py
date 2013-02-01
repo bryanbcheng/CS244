@@ -396,10 +396,6 @@ def verify_bandwidth(net):
     # kill the 2 iperf processes
     os.system('killall -9 iperf')
 
-    print rates
-    print avg(rates)
-    print avg(rates) / args.bw_net
-
     if not ok(avg(rates)/args.bw_net):
         print "FAILURE"
         raise Exception("Verify link bandwith failed")
