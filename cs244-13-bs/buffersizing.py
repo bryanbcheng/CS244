@@ -342,7 +342,7 @@ def do_sweep(iface):
         rate_avg = avg(rates)
         rate_median = median(rates)        
 
-        if (ok(rate_avg/args.bw_net)):
+        if (ok(rate_median/args.bw_net)):
             max_q = mid
         else:
             min_q = mid

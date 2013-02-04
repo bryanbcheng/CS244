@@ -13,11 +13,11 @@ Also, Mininet is a simulated experiment; therefore, it does not have some of the
 
 2) In the binary search algorithm, we adjust the buffer size while the flows are running. How long will it take for the TCP flows to adjust their windows when the buffer size is reduced to half its value?
 
-RTT ratio??
+By observation from the graphs, it usually takes at most a couple seconds for the TCP flows to adapt to the adjusted buffer size. This time would be the time it takes for the sender to realize packets have been dropped. With the halved buffer, the time it takes for a packet to traverse the newly sized queue and the entire network and let the original sender know of the dropped packet should be about q/2c + propagation delay.
 
 3) In the experimental setup, we use a modified iperf because it is hard to establish new connections after long lived TCP flows have started. Why is it so?
 
-New connections will have to start in slow start, but since the network is congested, it will immediately exit slow start and enter congestion avoidance. The existing flows will thus have much larger congestion windows, while the newer flows will start with smaller congestion windows and have trouble becoming larger. Thus it will take much longer for the flows to reach a steady state.
+New connections will have to start in slow start, but since the network is congested, it will immediately exit slow start and enter congestion avoidance. The existing flows will thus have much larger congestion windows, while the newer flows will start with smaller congestion windows and have trouble becoming larger. Thus it will take much longer for the flows to reach a steady state or some flows could be starved.
 
 4) Look at the plot of cwnd and buffer occupancy for N=1 flow. Based on your understanding of TCP and the buffer sizing paper, explain why you need buffering at the bottleneck switch. For N=1 flow, what is the minimum amount of buffering required to keep the bottleneck link 100% utilized? Why?
 
