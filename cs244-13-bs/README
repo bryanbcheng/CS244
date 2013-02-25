@@ -13,7 +13,7 @@ Also, Mininet is a simulated experiment; therefore, it does not have some of the
 
 2) In the binary search algorithm, we adjust the buffer size while the flows are running. How long will it take for the TCP flows to adjust their windows when the buffer size is reduced to half its value?
 
-By observation from the graphs, it usually takes at most a couple seconds for the TCP flows to adapt to the adjusted buffer size. This time would be the time it takes for the sender to realize packets have been dropped. With the halved buffer, the time it takes for a packet to traverse the newly sized queue and the entire network and let the original sender know of the dropped packet should be about q/2c + propagation delay.
+By observation from the graphs, it usually takes at most a couple seconds for the TCP flows to adapt to the adjusted buffer size. This time would be the time it takes for the sender to realize packets have been dropped. With the halved buffer, the time it takes for a packet to traverse the newly sized queue and the entire network and let the original sender know of the dropped packet should be about q/2c + RTT.
 
 3) In the experimental setup, we use a modified iperf because it is hard to establish new connections after long lived TCP flows have started. Why is it so?
 
