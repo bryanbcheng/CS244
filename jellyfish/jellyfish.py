@@ -54,7 +54,7 @@ class JFTopo(Topo):
     "Jellyfish Topology"
 
     def __init__(self, nServers, nSwitches, nPorts):
-        super(JFTopo, self).__init()
+        super(JFTopo, self).__init__()
         self.nServers = nServers
         self.nSwitches = nSwitches
         self.nPorts = nPorts
@@ -74,6 +74,9 @@ class JFTopo(Topo):
         
         # Connect each server with a switch
         for n in range(self.nServers):
+            print "adding link h%s-s%s" % (n, n)
+            print servers[n]
+            print switches[n]
             self.addLink(servers[n], switches[n]) #delay, bandwith?
             openPorts[n] -= 1
             # assume nPorts > 1
@@ -108,12 +111,34 @@ class JFTopo(Topo):
                     switchesLeft -= 1
 
         if switchesLeft > 0:
-            # post process
-            pass
+            for i in range(self.nSwitches):
+                while openPorts[i] > 1:
+                    while True:
+                        # incremental expansion
+                        rLink = random.choice(links)
+                        if (i, rLink[0]) in links:
+                            continue
+                        if (i, rLink[1]) in links:
+                            continue
+
+                        # Remove links
+                        links.remove(rLink)
+                        links.remove(rLink[::-1])
+
+                        # Add new links
+                        links.add((i, rLink[0]))
+                        links.add((rLink[0], i))
+                        links.add((i, rLink[1]))
+                        links.add((rLink[1], i))
+
+                        openPorts[i] -= 2
 
         for link in links:
             # prevent double counting
             if link[0] < link[1]:
+                print "adding link s%s-s%s" % (link[0], link[1])
+                print switches[link[0]]
+                print switches[link[1]]
                 self.addLink(switches[link[0]], switches[link[1]])
         # while 
         # pick random switch (make sure has open port)
@@ -125,7 +150,7 @@ class JFTopo(Topo):
         
 
 def jellyfish():
-    topo = JFTopo()
+    topo = JFTopo(nServers=args.nServers,nSwitches=args.nSwitches,nPorts=args.nPorts)
     net = Mininet(topo=topo, host=CPULimitedHost, link=TCLink)
     net.start()
 
